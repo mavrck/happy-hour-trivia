@@ -23,6 +23,8 @@ const FIREWORKS = [
 export default defineComponent({
     components: { Countdown },
     mixins: [polling],
+    // Phones poll slowly while the WebSocket is up; Reverb pings cover the real-time part.
+    pushPollMs: 5000,
     data() {
         return {
             token: localStorage.getItem(STORAGE_KEY),

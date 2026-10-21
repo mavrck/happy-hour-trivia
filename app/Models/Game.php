@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
+use App\Events\GameUpdated;
 use App\Support\QuestionSelector;
 use Illuminate\Support\Facades\DB;
 
@@ -91,7 +92,9 @@ class Game extends Model
 
     public function reveal(): void
     {
-        DB::transaction(function () {
+        $revealed = false;
+
+        DB::transaction(function () use (&$revealed) {
             // Atomic flip so concurrent polls only score once.
             $flipped = static::where('id', $this->id)
                 ->where('state', self::QUESTION)
@@ -101,6 +104,8 @@ class Game extends Model
                 return;
             }
 
+            $revealed = true;
+
             Answer::where('question_id', $this->question_id)
                 ->where('points', '>', 0)
                 ->get()
@@ -108,11 +113,16 @@ class Game extends Model
         });
 
         $this->refresh();
+
+        if ($revealed) {
+            GameUpdated::send();
+        }
     }
 
     public function finish(): void
     {
         $this->update(['state' => self::FINISHED]);
+        GameUpdated::send();
     }
 
     /** Back to the lobby with scores cleared. Pass $wipePlayers to drop everyone too. */
@@ -123,6 +133,8 @@ class Game extends Model
             $wipePlayers ? Player::query()->delete() : Player::query()->update(['score' => 0]);
             $this->update(['state' => self::LOBBY, 'question_id' => null, 'started_at_ms' => null, 'question_ids' => null]);
         });
+
+        GameUpdated::send();
     }
 
     private function showQuestion(?Question $question): void
@@ -139,5 +151,6 @@ class Game extends Model
             'started_at_ms' => static::nowMs(),
         ]);
         $this->load('question');
+        GameUpdated::send();
     }
 }

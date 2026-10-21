@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\GameUpdated;
 use App\Models\Answer;
 use App\Models\Game;
 use App\Models\Player;
@@ -49,6 +50,8 @@ class GameController extends Controller
             'pin' => str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT),
         ]);
 
+        GameUpdated::send();
+
         return response()->json(['token' => $player->token]);
     }
 
@@ -90,6 +93,9 @@ class GameController extends Controller
             // Points are re-scored at the time of the change, so a later answer is worth less.
             $existing->update(['choice' => $data['choice'], 'points' => $points, 'potential' => $potential]);
         }
+
+        // If that was the last answer needed, reveal now instead of waiting for the next poll.
+        $game->tick();
 
         return response()->json(['ok' => true]);
     }
