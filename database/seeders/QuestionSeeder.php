@@ -34,8 +34,13 @@ class QuestionSeeder extends Seeder
             ]);
         }
 
-        // A running game may point at a deleted question, so start it over. Players are kept.
-        Game::current()->reset();
+        // Seeding runs on every deploy. Only start the game over if it points at a question that's gone.
+        $game = Game::current();
+        $ids = $game->question_ids ?? [];
+
+        if ($ids && Question::whereIn('id', $ids)->count() !== count($ids)) {
+            $game->reset();
+        }
     }
 
     /**
