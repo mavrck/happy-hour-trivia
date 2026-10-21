@@ -19,7 +19,7 @@ export default defineComponent({
             return this.game?.question;
         },
         joinUrl() {
-            return window.location.origin;
+            return window.location.host;
         },
         maxCount() {
             return Math.max(1, ...(this.q?.counts ?? [0]));
