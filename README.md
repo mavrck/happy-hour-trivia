@@ -31,9 +31,19 @@ All are on `/host`, in the lobby before the game starts, except where noted.
 
 The host page also shows how many answers are in (and who hasn't answered), plus a table of every registered player with their rejoin code and score.
 
+### Managing players
+
+Each row in the host's player table has three actions:
+
+- **Rename:** changes the player's name. Names must be unique (ignoring case), and the player's screen updates on its own. Handy for a name that isn't appropriate or a duplicate.
+- **Kick:** removes the player and their answers. Their phone returns to the join screen, and they can rejoin, even under a new name.
+- **Ban:** removes the player and blocks them. Their phone shows "You've been removed from this game", and their name can't be used to rejoin, even with the correct rejoin code. Banned players don't count toward scores, the leaderboard, or "everyone has answered". Banned players are listed under the table with an **Unban** button.
+
+A ban is tied to the player's name and device, not to an account, so someone who clears their browser data and picks a different name can get back in. For a team event, kick-and-rename covers most cases. **Wipe players** clears everyone, including bans.
+
 ### Rejoining
 
-A refresh or a lost connection on the same phone needs nothing: the browser remembers the player. To switch devices, enter the same name on the new device and, when asked, the 4-digit rejoin code. The host can look codes up on `/host`.
+A refresh or a lost connection on the same phone needs nothing: the browser remembers the player. To switch devices, enter the same name on the new device and, when asked, the 4-digit rejoin code. The host can look codes up on `/host`. Banned players can't rejoin.
 
 ## Questions
 
@@ -96,7 +106,7 @@ Before an event, turn off hibernation for the environment so the first player do
 ```
 app/Models/Game.php                 The single game row: state, timing, settings, start/next/reveal
 app/Http/Controllers/GameController.php   Join, answer, and the shared state payload
-app/Http/Controllers/HostController.php   Host login and actions
+app/Http/Controllers/HostController.php   Host login, game actions, and player management (rename, kick, ban)
 app/Support/QuestionSelector.php    Picks and orders the questions for a game
 app/Events/GameUpdated.php          The Reverb ping
 database/data/questions.php         The question bank

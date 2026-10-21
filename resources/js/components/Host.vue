@@ -67,6 +67,30 @@ export default defineComponent({
                 this.busy = false;
             }
         },
+        async playerAction(action, player, extra = {}) {
+            try {
+                this.applyState(await post('/host/action', { action, player: player.id, ...extra }));
+            } catch (e) {
+                alert(e.message);
+            }
+        },
+        rename(player) {
+            const name = prompt(`New name for ${player.name}:`, player.name)?.trim();
+
+            if (name && name !== player.name) {
+                this.playerAction('rename', player, { name });
+            }
+        },
+        kick(player) {
+            if (confirm(`Kick ${player.name}? They can rejoin, even under a new name.`)) {
+                this.playerAction('kick', player);
+            }
+        },
+        ban(player) {
+            if (confirm(`Ban ${player.name}? They won't be able to rejoin with that name or on that device.`)) {
+                this.playerAction('ban', player);
+            }
+        },
     },
 });
 </script>
@@ -174,6 +198,7 @@ export default defineComponent({
                             <th class="py-1">Name</th>
                             <th class="py-1">Rejoin code</th>
                             <th class="py-1 text-right">Score</th>
+                            <th class="py-1"></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -181,9 +206,24 @@ export default defineComponent({
                             <td class="py-2">{{ p.name }}</td>
                             <td class="py-2 font-mono">{{ p.pin }}</td>
                             <td class="py-2 text-right">{{ p.score }}</td>
+                            <td class="space-x-2 py-2 text-right text-sm whitespace-nowrap">
+                                <button class="text-gray-600 underline" @click="rename(p)">Rename</button>
+                                <button class="text-gray-600 underline" @click="kick(p)">Kick</button>
+                                <button class="text-danger underline" @click="ban(p)">Ban</button>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
+
+                <div v-if="game.banned.length" class="mt-4">
+                    <h3 class="mb-1 text-sm font-bold text-gray-600">Banned ({{ game.banned.length }})</h3>
+                    <ul class="text-sm">
+                        <li v-for="p in game.banned" :key="p.id" class="flex justify-between border-t border-gray-200 py-1">
+                            <span>{{ p.name }}</span>
+                            <button class="text-gray-600 underline" @click="playerAction('unban', p)">Unban</button>
+                        </li>
+                    </ul>
+                </div>
             </section>
         </template>
     </main>

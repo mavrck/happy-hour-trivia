@@ -130,7 +130,7 @@ class Game extends Model
     {
         DB::transaction(function () use ($wipePlayers) {
             Answer::query()->delete();
-            $wipePlayers ? Player::query()->delete() : Player::query()->update(['score' => 0]);
+            $wipePlayers ? Player::withoutGlobalScopes()->delete() : Player::query()->update(['score' => 0]);
             $this->update(['state' => self::LOBBY, 'question_id' => null, 'started_at_ms' => null, 'question_ids' => null]);
         });
 

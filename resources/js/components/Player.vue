@@ -164,6 +164,11 @@ export default defineComponent({
             <p v-if="error" class="text-center text-danger">{{ error }}</p>
         </form>
 
+        <div v-else-if="game?.me?.banned" class="my-auto space-y-2 text-center">
+            <p class="font-display text-3xl font-extrabold">You've been removed from this game</p>
+            <p class="text-gray-500">The host has removed {{ game.me.name }}. If you think this is a mistake, find the host.</p>
+        </div>
+
         <template v-else-if="game">
             <header class="flex justify-between pb-4 text-sm text-gray-500">
                 <span>{{ game.me?.name }} · rejoin code {{ game.me?.pin }}</span>

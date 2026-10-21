@@ -21,7 +21,11 @@ class GameController extends Controller
         ]);
         $name = trim($data['name']);
 
-        $existing = Player::whereRaw('lower(name) = ?', [Str::lower($name)])->first();
+        $existing = Player::withoutGlobalScopes()->whereRaw('lower(name) = ?', [Str::lower($name)])->first();
+
+        if ($existing?->banned_at) {
+            return response()->json(['message' => 'That name isn\'t available. Pick another.'], 422);
+        }
 
         // Same name + matching code means the same person on a new device.
         if ($existing) {
@@ -157,8 +161,8 @@ class GameController extends Controller
 
             $payload['roster'] = Player::orderBy('name')->get(['id', 'name', 'pin', 'score'])
                 ->makeVisible('pin')
-                ->each(fn (Player $p) => $p->setAttribute('answered', in_array($p->id, $answeredIds)))
-                ->makeHidden('id');
+                ->each(fn (Player $p) => $p->setAttribute('answered', in_array($p->id, $answeredIds)));
+            $payload['banned'] = Player::withoutGlobalScopes()->whereNotNull('banned_at')->orderBy('name')->get(['id', 'name']);
         }
 
         if ($showQuestion) {
@@ -181,7 +185,9 @@ class GameController extends Controller
             ];
         }
 
-        if ($token && $player = Player::where('token', $token)->first()) {
+        if ($token && $banned = Player::withoutGlobalScopes()->where('token', $token)->whereNotNull('banned_at')->first()) {
+            $payload['me'] = ['banned' => true, 'name' => $banned->name];
+        } elseif ($token && $player = Player::where('token', $token)->first()) {
             $mine = $showQuestion ? Answer::where(['player_id' => $player->id, 'question_id' => $question->id])->first() : null;
 
             $payload['me'] = [
